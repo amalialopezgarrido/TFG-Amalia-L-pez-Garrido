@@ -1,0 +1,57 @@
+---
+title: "IPTW"
+author: "Amalia López"
+output: pdf_document
+---
+```{r}
+library(tidyverse)
+library(knitr)
+set.seed(42)
+n<-500
+
+#Covariable: Edad (de 20 a 60 años)
+edad <- runif(n, 20, 60)
+
+#Mecanismo de asignación: Los jóvenes tienen más probabilidad de ser tratados
+prob_A <- plogis(-0.1*(edad-40))
+A <- rbinom(n, 1, prob_A)
+
+#Resultado Y: Depende de la edad y del tratamiento (ATE Real = 5)
+Y <- 0.2*edad+5*A+rnorm(n, 0, 2)
+
+df_iptw <- data.frame(Y, A, edad)
+
+#Ajustar el modelo de Propensity Score(ps) (Regresión Logística)
+modelo_ps <- glm(A ~ edad, data = df_iptw, family = binomial())
+df_iptw$ps <- predict(modelo_ps, type = "response")
+
+#Calcular los pesos estabilizados
+df_iptw <- df_iptw %>%
+mutate(peso = ifelse(A == 1, 1/ps, 1/(1-ps)))
+
+#Visualizamos los primeros pesos calculados
+kable(head(df_iptw %>% select(edad, A, ps, peso), 5), digits = 3)
+```
+
+
+
+```{r}
+#Balance original
+balance_obs <- df_iptw %>% group_by(A) %>% summarise(media_edad = mean(edad))
+
+#Balance ponderado (Pseudo-población)
+balance_w <- df_iptw %>%
+group_by(A) %>%
+summarise(media_edad_w = sum(edad * peso) / sum(peso))
+kable(list(balance_obs, balance_w), caption = "Balance de Edad: Original vs Ponderado")
+```
+
+```{r}
+#Estimador de IPTW para el ATE
+media_Y1_w <- sum(df_iptw$Y * df_iptw$A * df_iptw$peso) / sum(df_iptw$A * df_iptw$peso)
+media_Y0_w <- sum(df_iptw$Y * (1 - df_iptw$A) * df_iptw$peso) / sum((1 - df_iptw$A) * df_iptw$peso)
+
+ate_iptw <- media_Y1_w - media_Y0_w
+
+cat("El ATE estimado mediante IPTW es:", round(ate_iptw, 3))
+```
