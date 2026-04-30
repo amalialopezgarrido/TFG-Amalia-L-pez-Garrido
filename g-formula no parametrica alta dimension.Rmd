@@ -1,0 +1,24 @@
+---
+title: "g-formula no parametrica alta dimension"
+author: "Amalia López"
+output: pdf_document
+---
+```{r}
+library(tidyverse)
+library(knitr)
+set.seed(123)
+n <- 100
+# 2. Configuración de alta dimensionalidad (k=10)
+#Ahora generamos 1000 datos aleatorios con 10 variables
+X <- matrix(rbinom(n*10, 1, 0.5), ncol = 10)
+colnames(X) <- paste0("Var", 1:10) #nombramos las columnas
+#volvemos a crear una tabla de datos generando variables aleatorias siguiendo una binomial
+datos_muchos <- data.frame(X, Tratamiento = rbinom(n, 1, 0.5))
+#Intento de estratificación no paramétrica
+tabla_b <- datos_muchos %>%
+ group_by_all() %>%
+ tally()
+#Mostramos los primeros estratos encontrados
+kable(head(tabla_b, 10), caption = "Dispersión de datos en alta dimensión (k=10)")
+
+```
