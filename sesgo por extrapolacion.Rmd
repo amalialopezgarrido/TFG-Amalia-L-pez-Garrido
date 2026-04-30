@@ -1,0 +1,41 @@
+---
+title: "sesgo por extrapolacion"
+author: "Amalia López"
+output: pdf_document
+---
+
+```{r}
+library(tidyverse)
+#Creamos una realidad no lineal
+n<-200
+set.seed(42)
+
+#Covariable (Edad) de 20 a 50 años con una distribucion uniforme
+edad <- runif(n, 20, 50)
+
+# El tratamiento solo se asigna a gente joven (Falta de soporte en edades altas)
+prob_A <- ifelse(edad < 35, 0.8, 0.05)
+A <- rbinom(n, 1, prob_A)
+
+#El resultado real sigue una curva (cuadrática)
+#Pero solo observaremos tratados en la zona joven
+Y <- 0.1 * (edad^2) + 5 * A + rnorm(n, 0, 10)
+df_extrapolacion <- data.frame(Y, A, edad)
+
+#Ajustamos un modelo lineal (Error de especificación)
+#El modelo cree que la relación es una línea recta
+modelo_erroneo <- lm(Y ~ A + edad, data = df_extrapolacion)
+
+#G-computation: Predecimos para toda la muestra (incluyendo mayores de 35)
+df_a1 <- df_extrapolacion %>% mutate(A = 1)
+df_a0 <- df_extrapolacion %>% mutate(A = 0)
+
+pred_a1 <- predict(modelo_erroneo, df_a1)
+pred_a0 <- predict(modelo_erroneo, df_a0)
+
+#Visualización del error
+ggplot(df_extrapolacion, aes(x = edad, y = Y, color = as.factor(A))) + geom_point(alpha = 0.5) + geom_line(aes(y = pred_a1), color = "blue", size = 1) + #Lo que el modelo cree
+geom_line(aes(y = pred_a0), color = "red", size = 1) + #Lo que el modelo cree
+labs(title = "Sesgo por Extrapolación",
+subtitle = "Las líneas rectas ignoran la curvatura real de los datos", x = "Edad", y = "Resultado Y", color = "Tratamiento") + theme_minimal()
+```
