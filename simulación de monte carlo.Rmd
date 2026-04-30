@@ -1,0 +1,42 @@
+---
+title: "simulación de monte carlo"
+author: "Amalia López"
+output: pdf_document
+---
+```{r}
+library(tidyverse)
+library(knitr)
+set.seed(123) #Para reproducibilidad
+n<-100 #Tamano de muestra
+mu<-0.5 #Media poblacional
+sigma<-1 #Desviacion estandar poblacional
+N_sim<-10000 #Numero de simulaciones de Monte Carlo
+
+#Aproximacion teorica usando el Metodo Delta
+#g(x)=1/x => g'(x)=-1/x^2
+#Var(g(X_bar)) approx [g'(mu)]^2*(sigma^2/n)
+g_prime_mu <- (-1) / (mu^2)
+varianza_delta <- (g_prime_mu^2) * (sigma^2/n)
+cat("Varianza aproximada por Metodo Delta:", varianza_delta, "\n")
+```
+
+```{r}
+#Simulacion de Monte Carlo
+x_bar_sim <- replicate(N_sim, mean(rnorm(n, mean = mu, sd = sigma)))
+
+#Aplicamos la función g(x)=1/x a nuestros resultados de simulación
+g_x_bar<-1/x_bar_sim 
+
+#Calculo de la varianza empirica (Monte Carlo)
+varianza_mc <- var(g_x_bar)
+cat("Varianza obtenida por Monte Carlo:", varianza_mc, "\n")
+```
+
+```{r}
+#Visualización del fallo
+#Si mu es pequeño respecto al error estándar (sigma/sqrt(n)),
+#algunos valores de x_bar estarán muy cerca de 0, haciendo que 1/x_bar esplote.
+hist(g_x_bar, breaks=100, main= "Distribución de 1/x_bar",xlab="Valores de g(x_bar)", col="lightblue",xlim=c(-10,15))
+abline(v=1/mu, col="red", lwd=2,lty=2) #valor esperado teorico
+
+```
