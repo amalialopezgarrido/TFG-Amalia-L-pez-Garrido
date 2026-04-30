@@ -9,7 +9,7 @@ output: pdf_document
 library(tidyverse)
 library(knitr)
 set.seed(123)
-n <- 100 #usamos una muestra de 100 observaciones
+n<-100 #usamos una muestra de 100 observaciones
 #creamos una tabla de datos generando variables aleatorias
 #siguiendo una binomial
 datos_pocos <- data.frame(  

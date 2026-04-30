@@ -1,0 +1,49 @@
+---
+title: "g-formula paramétrica"
+author: "Amalia López"
+output: pdf_document
+---
+
+```{r}
+#usamos los datos anteriores 
+library(tidyverse)
+library(knitr)
+set.seed(123)
+n<-100 
+datos_pocos <- data.frame(  
+ Sexo = rbinom(n, 1, 0.5),
+ Fumador = rbinom(n, 1, 0.5),
+ Tratamiento = rbinom(n, 1, 0.5)
+)
+```
+
+
+
+```{r}
+X <- matrix(rbinom(n*10, 1, 0.5), ncol = 10)
+colnames(X) <- paste0("Var", 1:10)
+
+# Creamos el dataset y la variable de resultado Y
+# Definimos un ATE REAL de 0.5 (Efecto del tratamiento)
+datos_muchos <- data.frame(X, Tratamiento = rbinom(n, 1, 0.5))
+datos_muchos$Y <- 0.2 + 0.5 * datos_muchos$Tratamiento + 0.1 * (rowSums(datos_muchos[,1:10])/10) + rnorm(n, 0, 0.05)
+```
+
+
+```{r}
+#Ajuste del modelo: Predecimos el resultado Y basándonos en Tratamiento y X
+modelo_final <- lm(Y ~ Tratamiento + ., data = datos_muchos)
+
+#Imputación contrafactual:
+#Escenario donde TODOS son tratados
+datos_a1 <- datos_muchos %>% mutate(Tratamiento = 1)
+pred_a1 <- predict(modelo_final, datos_a1)
+
+#Escenario donde NADIE es tratado
+datos_a0 <- datos_muchos %>% mutate(Tratamiento = 0)
+pred_a0 <- predict(modelo_final, datos_a0)
+
+#Estimación del ATE
+ate_est_param <- mean(pred_a1 - pred_a0)
+cat("El ATE estimado mediante el modelo paramétrico es: ", ate_est_param)
+```
