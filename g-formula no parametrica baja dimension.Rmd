@@ -1,0 +1,22 @@
+---
+title: "g-formula no parametrica baja dimension"
+author: "Amalia López"
+output: pdf_document
+---
+```{r}
+# 1. Configuración de baja dimensionalidad (k=2)
+library(tidyverse)
+library(knitr)
+set.seed(123)
+n <- 100
+datos_pocos <- data.frame(
+ Sexo = rbinom(n, 1, 0.5),
+ Fumador = rbinom(n, 1, 0.5),
+ Tratamiento = rbinom(n, 1, 0.5)
+)
+# Visualización de la densidad de los estratos
+tabla_a <- datos_pocos %>%
+ group_by(Sexo, Fumador, Tratamiento) %>%
+ tally()
+kable(tabla_a, caption = "Distribución en baja dimensión (k=2)")
+```
